@@ -1,0 +1,58 @@
+# depslib dependency file v1.0
+1780612173 source:c:\users\ivank\onedrive\desktop\unla licenciatura en sistemas\programacion concurrente\tp_programacion_concurrente\main.cpp
+	<iostream>
+	<fstream>
+	<thread>
+	<vector>
+	"granja.h"
+
+1779056554 c:\users\ivank\onedrive\desktop\unla licenciatura en sistemas\programacion concurrente\tp_programacion_concurrente\semaforo.h
+	<mutex>
+	<condition_variable>
+
+1779056542 source:c:\users\ivank\onedrive\desktop\unla licenciatura en sistemas\programacion concurrente\tp_programacion_concurrente\semaforo.cpp
+	"semaforo.h"
+	<mutex>
+	<condition_variable>
+
+1780612662 source:c:\users\ivank\onedrive\desktop\unla licenciatura en sistemas\programacion concurrente\tp_programacion_concurrente\granja.cpp
+	"granja.h"
+	<iostream>
+	<fstream>
+	<thread>
+	<iomanip>
+
+1780612643 c:\users\ivank\onedrive\desktop\unla licenciatura en sistemas\programacion concurrente\tp_programacion_concurrente\granja.h
+	<vector>
+	<mutex>
+	<chrono>
+	<string>
+	"semaforo.h"
+
+1780616050 source:c:\users\ivank\onedrive\desktop\unla licenciatura en sistemas\programacion concurrente\tp_programacion_concurrente\main_equidad.cpp
+	<iostream>
+	<fstream>
+	<thread>
+	<vector>
+	"granja.h"
+
+1780615947 source:c:\users\ivank\onedrive\desktop\unla licenciatura en sistemas\programacion concurrente\tp_programacion_concurrente\main_masiva.cpp
+	<iostream>
+	<fstream>
+	<thread>
+	<vector>
+	"granja.h"
+
+1780616016 source:c:\users\ivank\onedrive\desktop\unla licenciatura en sistemas\programacion concurrente\tp_programacion_concurrente\main_saturacion.cpp
+	<iostream>
+	<fstream>
+	<thread>
+	<vector>
+	"granja.h"
+
+1780615975 source:c:\users\ivank\onedrive\desktop\unla licenciatura en sistemas\programacion concurrente\tp_programacion_concurrente\main_vacuidad.cpp
+	<iostream>
+	<fstream>
+	<thread>
+	"granja.h"
+
