@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <thread>
-#include <vector>
 #include "granja.h"
 
 int main() {
@@ -14,16 +13,18 @@ int main() {
     const int NUM_HILOS = 3;
     const int JOBS_POR_HILO = 500;
 
-    std::vector<std::thread> productores;
-    std::vector<std::thread> consumidores;
+    std::thread productores[NUM_HILOS];
+    std::thread consumidores[NUM_HILOS];
 
-    for (int i = 1; i <= NUM_HILOS; ++i) {
-        productores.emplace_back(nodo_api_gateway, i, JOBS_POR_HILO);
-        consumidores.emplace_back(worker_node, i, JOBS_POR_HILO);
+    for (int i = 0; i < NUM_HILOS; ++i) {
+        productores[i] = std::thread(nodo_api_gateway, i + 1, JOBS_POR_HILO);
+        consumidores[i] = std::thread(worker_node, i + 1, JOBS_POR_HILO);
     }
 
-    for (auto& p : productores) p.join();
-    for (auto& c : consumidores) c.join();
+    for (int i = 0; i < NUM_HILOS; ++i) {
+        productores[i].join();
+        consumidores[i].join();
+    }
 
     log_evento("--- PRUEBA 1 TERMINADA. Total Finalizadas: " + std::to_string(tareas_finalizadas) + " ---");
     return 0;

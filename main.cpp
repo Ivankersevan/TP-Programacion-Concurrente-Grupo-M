@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <thread>
-#include <vector>
 #include "granja.h"
 
 int main() {
@@ -17,22 +16,25 @@ int main() {
     const int NUM_PRODUCTORES = 3;
     const int NUM_CONSUMIDORES = 3;
     const int JOBS_POR_PRODUCTOR = 10;
-
     const int JOBS_POR_CONSUMIDOR = 10;
 
-    std::vector<std::thread> hilos_productores;
-    std::vector<std::thread> hilos_consumidores;
+    std::thread hilos_productores[NUM_PRODUCTORES];
+    std::thread hilos_consumidores[NUM_CONSUMIDORES];
 
-    for (int i = 1; i <= NUM_PRODUCTORES; ++i) {
-        hilos_productores.emplace_back(nodo_api_gateway, i, JOBS_POR_PRODUCTOR);
+    for (int i = 0; i < NUM_PRODUCTORES; ++i) {
+        hilos_productores[i] = std::thread(nodo_api_gateway, i + 1, JOBS_POR_PRODUCTOR);
     }
 
-    for (int i = 1; i <= NUM_CONSUMIDORES; ++i) {
-        hilos_consumidores.emplace_back(worker_node, i, JOBS_POR_CONSUMIDOR);
+    for (int i = 0; i < NUM_CONSUMIDORES; ++i) {
+        hilos_consumidores[i] = std::thread(worker_node, i + 1, JOBS_POR_CONSUMIDOR);
     }
 
-    for (auto& p : hilos_productores) p.join();
-    for (auto& c : hilos_consumidores) c.join();
+    for (int i = 0; i < NUM_PRODUCTORES; ++i) {
+        hilos_productores[i].join();
+    }
+    for (int i = 0; i < NUM_CONSUMIDORES; ++i) {
+        hilos_consumidores[i].join();
+    }
 
     log_evento("--- Proceso Terminado. Tareas Finalizadas: " + std::to_string(tareas_finalizadas) + " ---");
 

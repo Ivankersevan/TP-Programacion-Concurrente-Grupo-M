@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <thread>
-#include <vector>
 #include "granja.h"
 
 void productor_puros_premium() {
@@ -9,8 +8,10 @@ void productor_puros_premium() {
         Job j; j.id = 9000 + i; j.prioridad = 1; j.estado = "EN_COLA";
         j.tiempo_llegada = std::chrono::steady_clock::now();
 
+        // Inserción con arreglo clásico
         mtx_message_queue.lock();
-        message_queue.push_back(j);
+        message_queue[cantidad_en_cola] = j;
+        cantidad_en_cola++;
         mtx_message_queue.unlock();
 
         log_evento(j.id, "Premium", "CREADO_Y_EN_COLA");
@@ -28,12 +29,16 @@ int main() {
     std::thread prod(productor_puros_premium);
     prod.join();
 
-    std::vector<std::thread> workers;
-    for (int i = 1; i <= 8; ++i) {
-        workers.emplace_back(worker_node, i, 1);
+    const int NUM_WORKERS = 8;
+    std::thread workers[NUM_WORKERS];
+
+    for (int i = 0; i < NUM_WORKERS; ++i) {
+        workers[i] = std::thread(worker_node, i + 1, 1);
     }
 
-    for (auto& w : workers) w.join();
+    for (int i = 0; i < NUM_WORKERS; ++i) {
+        workers[i].join();
+    }
 
     log_evento("--- PRUEBA 3 TERMINADA ---");
     return 0;

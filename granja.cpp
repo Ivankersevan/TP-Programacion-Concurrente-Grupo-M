@@ -4,7 +4,8 @@
 #include <thread>
 #include <iomanip>
 
-std::vector<Job> message_queue;
+Job message_queue[2000];
+int cantidad_en_cola = 0;
 int tareas_finalizadas = 0;
 
 std::mutex mtx_contador;
@@ -66,6 +67,7 @@ void log_evento(int job_id, const std::string& prioridad, const std::string& eve
     mtx_consola.unlock();
 }
 
+// PRODUCTOR (Nodo API Gateway)
 void nodo_api_gateway(int id_productor, int cantidad_jobs) {
     for (int i = 0; i < cantidad_jobs; ++i) {
         Job nuevo_job;
@@ -78,7 +80,8 @@ void nodo_api_gateway(int id_productor, int cantidad_jobs) {
         log_evento(nuevo_job.id, tipo, "CREADO");
 
         mtx_message_queue.lock();
-        message_queue.push_back(nuevo_job);
+        message_queue[cantidad_en_cola] = nuevo_job;
+        cantidad_en_cola++;
         mtx_message_queue.unlock();
 
         log_evento(nuevo_job.id, tipo, "EN_COLA");
@@ -88,49 +91,63 @@ void nodo_api_gateway(int id_productor, int cantidad_jobs) {
     }
 }
 
+// CONSUMIDOR (Worker Node)
 void worker_node(int id_worker, int tareas_a_procesar) {
     for (int i = 0; i < tareas_a_procesar; ++i) {
         wait(jobs_pendientes);
 
+        // Iteración segura sobre el Buffer 1
         mtx_message_queue.lock();
         auto ahora = std::chrono::steady_clock::now();
-        auto mejor_job = message_queue.begin();
+        int indice_mejor_job = 0;
         double mejor_puntaje = -1.0;
 
-        for (auto it = message_queue.begin(); it != message_queue.end(); ++it) {
-            auto espera_ms = std::chrono::duration_cast<std::chrono::milliseconds>(ahora - it->tiempo_llegada).count();
-            double puntaje = (it->prioridad * 1000) + (espera_ms * 0.5);
+        // Recorremos el arreglo clásico
+        for (int j = 0; j < cantidad_en_cola; ++j) {
+            auto espera_ms = std::chrono::duration_cast<std::chrono::milliseconds>(ahora - message_queue[j].tiempo_llegada).count();
+            double puntaje = (message_queue[j].prioridad * 1000) + (espera_ms * 0.2);
 
             if (puntaje > mejor_puntaje) {
                 mejor_puntaje = puntaje;
-                mejor_job = it;
+                indice_mejor_job = j;
             }
         }
 
-        Job trabajo_actual = *mejor_job;
-        message_queue.erase(mejor_job);
+        Job trabajo_actual = message_queue[indice_mejor_job];
+
+        // Borramos el elemento desplazando los demás hacia la izquierda
+        for (int j = indice_mejor_job; j < cantidad_en_cola - 1; ++j) {
+            message_queue[j] = message_queue[j + 1];
+        }
+        cantidad_en_cola--; // Reducimos el tamaño de la cola
         mtx_message_queue.unlock();
 
         std::string tipo = (trabajo_actual.prioridad == 1) ? "Premium" : "Free";
 
+        // Buffer 2 (Pool de VRAM) - Límite de 5 slots
         wait(slots_vram);
 
+        // Exclusión mutua y retardo de entrada (450ms)
         mtx_vram_entrada.lock();
         std::this_thread::sleep_for(std::chrono::milliseconds(450));
         mtx_vram_entrada.unlock();
 
         log_evento(trabajo_actual.id, tipo, "ASIGNADO_VRAM");
 
+        // Tiempo de renderizado (600ms)
         std::this_thread::sleep_for(std::chrono::milliseconds(600));
 
+        // Exclusión mutua y retardo de salida (250ms)
         mtx_vram_salida.lock();
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
         mtx_vram_salida.unlock();
 
+        // Liberación del slot de VRAM
         signal(slots_vram);
 
         log_evento(trabajo_actual.id, tipo, "FINALIZADO");
 
+        // Protección del contador global contra Race Conditions
         mtx_contador.lock();
         tareas_finalizadas++;
         mtx_contador.unlock();
