@@ -79,6 +79,7 @@ void nodo_api_gateway(int id_productor, int cantidad_jobs) {
 
         log_evento(nuevo_job.id, tipo, "CREADO");
 
+        // Protección del Buffer 1 al insertar
         mtx_message_queue.lock();
         message_queue[cantidad_en_cola] = nuevo_job;
         cantidad_en_cola++;
@@ -102,9 +103,9 @@ void worker_node(int id_worker, int tareas_a_procesar) {
         int indice_mejor_job = 0;
         double mejor_puntaje = -1.0;
 
-        // Recorremos el arreglo clásico
         for (int j = 0; j < cantidad_en_cola; ++j) {
             auto espera_ms = std::chrono::duration_cast<std::chrono::milliseconds>(ahora - message_queue[j].tiempo_llegada).count();
+            // Algoritmo Anti-Starvation (Aging):Combina prioridad estática (1000 pts) con tiempo de espera dinámico (0.2 pts por ms)
             double puntaje = (message_queue[j].prioridad * 1000) + (espera_ms * 0.2);
 
             if (puntaje > mejor_puntaje) {

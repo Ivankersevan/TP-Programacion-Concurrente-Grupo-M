@@ -14,6 +14,7 @@ struct Job {
     std::chrono::steady_clock::time_point tiempo_llegada;
 };
 
+// Buffer 1 (Message Queue):Usamos contador para permitir iteración y evitar el FIFO estricto de las colas.
 extern Job message_queue[2000];
 extern int cantidad_en_cola;
 extern int tareas_finalizadas;
